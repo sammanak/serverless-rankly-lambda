@@ -1,0 +1,205 @@
+
+- What is Serverless?
++ Build and run applications without thinking about servers.
+
+Serverless works with Microsoft(azure-nodejs), IBM(openwhisk-java-maven), Google(google-js) and more...
+
+$ npm install -g serverless
+$ serverless # It will list the help command for you
+$ serverless create --help
+
+$ mkdir rankly 
+$ cd rankly
+
+$ sls create -t aws-nodejs # generated aws-nodejs template
+ _______                             __
+|   _   .-----.----.--.--.-----.----|  .-----.-----.-----.
+|   |___|  -__|   _|  |  |  -__|   _|  |  -__|__ --|__ --|
+|____   |_____|__|  \___/|_____|__| |__|_____|_____|_____|
+|   |   |             The Serverless Application Framework
+|       |                           serverless.com, v1.33.2
+ -------'
+
+Serverless: Successfully generated boilerplate for template: "aws-nodejs"
+Serverless: NOTE: Please update the "service" property in serverless.yml with your service name
+
+-------------- Connect Serverless to AWS Profile --------------
+> Login > AWS Home > IAM > Users > 
+
+> Click [Add User] Button 
+	User name: rankly-lambda
+	Checked: [Programmatic access]
+	Click [Next: Permissions] Button
+
+> Click [Attach existing policies directly]
+	Check [AdministratorAccess]
+
+> Click [Next Tags] Button
+> Click [Next: Reviews] Button
+> Click [Create user] Button
+
+> Success
+
+-------------- Save Access Key and Secret Key for use --------------
+Note: Just Example Access key ID & Secret access key 
+Access key ID			Secret access key
+AKIAI5B3 				pCJm1UtQv
+
+$ sls config credentials --provider aws --key AKIAI5B3 --secret pCJm1UtQv
+
+		Serverless: Setting up AWS...
+		Serverless: Saving your AWS profile in "~/.aws/credentials"...
+		Serverless: Success! Your AWS access keys were stored under the "default" profile.
+
+$ cd ~/.aws/
+
+ksamm@DESKTOP-GRLNB5K MINGW64 ~/.aws
+$ ls
+credentials
+
+$ nano credentials # You will see the Access key ID and Secret access key
+[default]
+aws_access_key_id = AKIAI5B3
+aws_secret_access_key = pCJm1UtQv
+
+[Ctrl + X] to Exit Edit File
+
+Remembers: these things are created because the function is stored in a dababase 
+and when It's ready to be invoke It's going to put into the container of Amazon and 
+It's gonna get run and after It's done running and there is no more request. 
+It's going to put back into the databse or that container gonna go down. And there is no way to remember anything.
+
+-------------- Deploy Function --------------
+$ sls deploy 
+
+		Serverless: Packaging service...
+		Serverless: Excluding development dependencies...
+		Serverless: Creating Stack...
+		Serverless: Checking Stack create progress...
+		.....
+		Serverless: Stack create finished...
+		Serverless: Uploading CloudFormation file to S3...
+		Serverless: Uploading artifacts...
+		Serverless: Uploading service .zip file to S3 (387 B)...
+		Serverless: Validating template...
+		Serverless: Updating Stack...
+		Serverless: Checking Stack update progress...
+		...............
+		Serverless: Stack update finished...
+		Service Information
+		service: rankly-lambda
+		stage: dev
+		region: us-east-1
+		stack: rankly-lambda-dev
+		api keys:
+		  None
+		endpoints:
+		  None
+		functions:
+		  rank: rankly-lambda-dev-rank
+
+-------------- Invoke Function --------------
+Note: Run CMD As Administrator
+$ sls invoke --function rank # It cost us the money alot when we run through this
+# or
+$ sls invoke local --function rank # for local development purpose
+{
+    "statusCode": 200,
+    "body": "{\"message\":\"Go Serverless v1.0! Your function executed successfully!\",\"input\":\"\"}"
+}
+
+
+
+
+-------------- serverless.yml --------------
+service: rankly-lambda
+
+provider:
+  name: aws
+  runtime: nodejs8.10
+  stage: dev
+
+functions:
+  rank:
+    handler: handler.rank
+    events:
+      - http:
+         path: rank
+         method: get
+---------------------------------------------
+
+$ sls deploy
+
+		Serverless: Packaging service...
+		Serverless: Excluding development dependencies...
+		Serverless: Uploading CloudFormation file to S3...
+		Serverless: Uploading artifacts...
+		Serverless: Uploading service .zip file to S3 (458 B)...
+		Serverless: Validating template...
+		Serverless: Updating Stack...
+		Serverless: Checking Stack update progress...
+		....................
+		Serverless: Stack update finished...
+		Service Information
+		service: rankly-lambda
+		stage: dev
+		region: us-east-1
+		stack: rankly-lambda-dev
+		api keys:
+		  None
+		endpoints:
+		  GET - https://28ivxr6xah.execute-api.us-east-1.amazonaws.com/dev/rank
+		functions:
+		  rank: rankly-lambda-dev-rank
+
+-------------- serverless.yml --------------
+
+service: rankly-lambda
+
+provider:
+  name: aws
+  runtime: nodejs8.10
+  stage: prod
+
+functions:
+  rank:
+    handler: handler.rank
+    events:
+      - http:
+         path: rank
+         method: get
+
+-------------- handler.js --------------
+
+'use strict';
+
+const emojis = [
+	'😁','😊','🙂','😉','😍','🔶','🔷','🚀'
+];
+
+module.exports.rank = async (event, context) => {
+  const rank = event.queryStringParameters.rank;
+  const rankEmoji = emojis[rank > emojis.length ? emojis.length - 1 : rank]
+
+  return {
+    statusCode: 200,
+    body: JSON.stringify({
+      message: 'Go Serverless v1.0! Your function executed successfully!',
+      input: rankEmoji,
+    }),
+  };
+
+};
+
+------------------------------------
+
+$ sls deploy
+$ sls invoke --function rank
+
+You can use [API ENDPOINT] generate by ***[Serverless]***
+=> https://bjo8n367z3.execute-api.us-east-1.amazonaws.com/prod/rank?rank=2
+
+?rank=2 => TAKE FROM => event.queryStringParameters.rank
+
+
+
